@@ -1,23 +1,29 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: sync_user
-      POSTGRES_PASSWORD: sync_pass
-      POSTGRES_DB: sync_db
+  psql:
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "5432:5432"
+      # Host 5432 is taken by newapp.backend's own Postgres when both
+      # projects run side by side; container-internal port stays 5432
+      # (that's all other price-hub containers ever use, via the `psql`
+      # service name), only the host-exposed side moves.
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sync_user -d sync_db"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 5
+    env_file:
+      - "../../.env"
+    networks:
+      - fastapi_net
 
-  network:
-    fastapi_net:
-      external: true
+networks:
+  fastapi_net:
+    external: true
 
 volumes:
   postgres_data:

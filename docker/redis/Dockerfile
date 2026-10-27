@@ -1,4 +1,1 @@
-FROM ubuntu:latest
-LABEL authors="ilyassultanov"
-
-ENTRYPOINT ["top", "-b"]
+FROM redis:8.10.1-alpine

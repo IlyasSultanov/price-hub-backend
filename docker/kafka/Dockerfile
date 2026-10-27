@@ -1,4 +1,1 @@
-FROM ubuntu:latest
-LABEL authors="ilyassultanov"
-
-ENTRYPOINT ["top", "-b"]
+FROM apache/kafka:4.3.1

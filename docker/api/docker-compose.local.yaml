@@ -1,2 +1,56 @@
+x-app-env: &app-env
+  env_file:
+    - "../../.env"
+  environment:
+    # .env's *_HOST / *_URL values are "localhost", for connecting from
+    # the Mac host into the port-mapped containers. From inside this
+    # container itself, each dependency is a *sibling* container reachable
+    # only by its compose service name over the shared docker network —
+    # override them here rather than in .env, which stays host-oriented.
+    POSTGRES_HOST: psql
+    POSTGRES_PORT: "5432"
+    RABBITMQ_HOST: rabbitmq
+    REDIS_HOST: redis
+    MINIO_URL: http://minio:9000
+    KEYCLOAK_SERVER_URL: http://keycloak:8080
+
 services:
-  
+  app:
+    build:
+      context: ../..
+      dockerfile: ./docker/api/Dockerfile
+    ports:
+      - "8111:8111"
+    volumes:
+      - ../..:/app
+      - app_venv:/app/.venv
+    <<: *app-env
+    networks:
+      - fastapi_net
+      - shared_network
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: ./docker/api/Dockerfile
+    # Same image as `app` (one image, role picked by command — ТЗ §16.1);
+    # this is the taskiq consumer that actually runs parse_feed_task.
+    # Without it, feeds enqueue but sit in `uploaded` forever.
+    command: ["uv", "run", "taskiq", "worker", "app.workers.brokers:broker", "app.workers.tasks"]
+    volumes:
+      - ../..:/app
+      - worker_venv:/app/.venv
+    <<: *app-env
+    networks:
+      - fastapi_net
+      - shared_network
+
+networks:
+  fastapi_net:
+    external: true
+  shared_network:
+    external: true
+
+volumes:
+  app_venv:
+  worker_venv:

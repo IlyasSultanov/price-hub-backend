@@ -1,0 +1,35 @@
+stages:
+  - test
+  - build-app
+  - deploy-app
+
+
+variables:
+  DOCKER_TAG: $CI_COMMIT_SHORT_SHA
+  DEV_RUNNER_TAG: price-dev
+  PROD_RUNNER_TAG: price-app
+
+.price_app_changes: &.price_app_changes
+  changes:
+    - gitlab-ci.yml
+    - price-app/**/*
+    - docker/**/*
+    - .env_example
+    - Makefile
+
+
+.rule_price_app:
+  rules:
+    if: "$CI_COMMIT_BRANCH == main"
+    when: manual
+    allow_failure: true
+    <<: *price_app_changes
+
+build_price_app:
+  stage: build-app
+  extends: .rule_price_app
+  tags:
+    - [$DEV_RUNNER_TAG]
+  script:
+    - docker build -t price-app:$DOCKER_TAG docker/api
+    - make build-prod

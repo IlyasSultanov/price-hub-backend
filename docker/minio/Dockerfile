@@ -1,4 +1,1 @@
-FROM ubuntu:latest
-LABEL authors="ilyassultanov"
-
-ENTRYPOINT ["top", "-b"]
+FROM quay.io/minio/minio:latest

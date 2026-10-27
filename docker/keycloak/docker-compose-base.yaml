@@ -1,0 +1,23 @@
+services:
+  keycloak:
+    restart: unless-stopped
+    build:
+      context: ../..
+      dockerfile: ./docker/keycloak/Dockerfile
+    container_name: keycloak
+    volumes:
+      - keycloak_data_vol:/opt/keycloak/data
+    networks:
+      shared_network:
+        aliases:
+          - keycloak-hub
+    environment:
+      - TZ=UTC
+
+networks:
+  shared_network:
+    external: true
+
+volumes:
+  keycloak_data_vol: {}
+  keycloak_postgres_data_vol: {}
